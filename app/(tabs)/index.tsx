@@ -1,4 +1,4 @@
-import { Image, StyleSheet, View } from "react-native";
+import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 
 import ParallaxScrollView from "@/components/ParallaxScrollView";
 import { ThemedView } from "@/components/ThemedView";
@@ -7,6 +7,7 @@ import DictionaryProvider, {
   useDictionaryContext,
 } from "@/utils/contexts/dictionary-provider";
 import Alphabet from "@/components/Alphabet";
+import { router } from "expo-router";
 
 export default function HomeScreen() {
   return (
@@ -19,6 +20,22 @@ export default function HomeScreen() {
         />
       }
     >
+      <ThemedView style={styles.titleContainer}>
+        <Pressable
+          style={{
+            borderWidth: 2,
+            borderColor: "white",
+            padding: 4,
+            borderRadius: 4,
+          }}
+          onPress={() => {
+            router.replace("/explore");
+          }}
+        >
+          <Text style={{ color: "white" }}>Explore</Text>
+        </Pressable>
+      </ThemedView>
+
       <ThemedView style={styles.titleContainer}>
         <DictionaryProvider>
           <DictionaryContainer />

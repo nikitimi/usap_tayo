@@ -8,6 +8,7 @@ import DictionaryProvider, {
 } from "@/utils/contexts/dictionary-provider";
 import Alphabet from "@/components/Alphabet";
 import { router } from "expo-router";
+import Select from "@/components/Select";
 
 export default function HomeScreen() {
   return (
@@ -20,6 +21,9 @@ export default function HomeScreen() {
         />
       }
     >
+      <ThemedView>
+        <Select options={["a", "b", "c"]} />
+      </ThemedView>
       <ThemedView style={styles.titleContainer}>
         <Pressable
           style={{

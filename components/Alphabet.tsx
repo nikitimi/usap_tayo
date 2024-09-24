@@ -1,5 +1,5 @@
-import { Text, FlatList, StyleSheet, Pressable } from "react-native";
 import React from "react";
+import { FlatList, Pressable, StyleSheet, Text } from "react-native";
 import { alphabet } from "@/utils/dictionary";
 import { useDictionaryContext } from "@/utils/contexts/dictionary-provider";
 
@@ -14,7 +14,7 @@ export default function Alphabet() {
           <Text style={styles.letter}>{item}</Text>
         </Pressable>
       )}
-      keyExtractor={(item, index) => index.toString()}
+      keyExtractor={(index) => index.toString()}
       numColumns={5}
       columnWrapperStyle={{ flex: 1 }}
     />

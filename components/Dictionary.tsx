@@ -1,7 +1,7 @@
-import { View, Text, StyleSheet, FlatList } from "react-native";
-import React from "react";
+import { Collapsible } from "@/components/Collapsible";
 import dictionary, { type Letter } from "@/utils/dictionary";
-import { Collapsible } from "./Collapsible";
+import React from "react";
+import { View, Text, StyleSheet, FlatList } from "react-native";
 
 type DictionaryProps = {
   letter: Letter;

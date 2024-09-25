@@ -37,7 +37,6 @@ export const alphabet = [
  *    word: string
  * \}[]
  */
-
 export type Letter = (typeof alphabet)[number];
 
 export default function dictionary(letter: Letter) {

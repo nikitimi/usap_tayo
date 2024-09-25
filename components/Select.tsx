@@ -1,139 +1,154 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import {
   FlatList,
+  LayoutRectangle,
   Modal,
-  Pressable,
-  StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from "react-native";
 
-import { ThemedText } from "@/components/ThemedText";
+import { cn } from "../lib/utils";
 
-type SelectProps = {
-  options: string[];
+// Extra types to you if you need :)
+export interface ISelectedOption {
+  label: string;
+  value: string;
+}
+
+export interface ISelectedOptionsArray {
+  options?: ISelectedOption[];
+}
+
+export type ISelectedValue = string | number | undefined;
+
+const convertToOptions = <T extends Record<string, any>>(
+  data?: T[],
+  labelKey?: keyof T,
+  valueKey?: keyof T
+): ISelectedOption[] => {
+  if (!data || !labelKey || !valueKey) return [];
+  return data.map((item) => ({
+    label: String(item[labelKey]),
+    value: item[valueKey],
+  }));
 };
 
-const Select = (props: SelectProps) => {
-  const { options } = props;
-  const closeButtonSign = "x";
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [selectedOption, setSelectedOption] = useState<string | null>(null);
+export interface SelectProps {
+  /** Add label string */
+  label?: string;
+  /** Add style to label*/
+  labelClasses?: string;
+  /** Add style to TouchableOpacity selector*/
+  selectClasses?: string;
+  /** Add your options array -> send any type (example model: [{item:'',key:''}]) to converter to ISelectedOption > {label, value}*/
+  options: any[];
+  /** Add your selected state changer*/
+  onSelect: (value: string | number) => void;
+  /** Add your selected state value*/
+  selectedValue?: string | number;
+  /** Add your selected placeholder -> default is 'Select an option' */
+  placeholder?: string;
+  /** Define labelKey to options */
+  labelKey: string;
+  /** Define valueKey to options */
+  valueKey: string;
+}
 
-  function getFinalOptions() {
-    const finalOptions = options.map((item) => item.toLowerCase());
-    finalOptions.push(closeButtonSign);
-    return finalOptions;
-  }
+/** Customizable Select Component :) options receive any data type and converter into label and value to render  */
+export const Select = ({
+  label,
+  labelClasses,
+  selectClasses,
+  options,
+  onSelect,
+  selectedValue,
+  placeholder = "Select an option",
+  labelKey,
+  valueKey,
+}: SelectProps) => {
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [dropdownPosition, setDropdownPosition] =
+    useState<LayoutRectangle | null>(null);
+  const selectButtonRef = useRef<TouchableOpacity>(null);
 
-  function handleOptionPress(option: typeof selectedOption) {
-    setIsModalVisible(false);
-    setSelectedOption(option);
-  }
+  const new_options = convertToOptions(options, labelKey, valueKey);
+
+  const handleSelect = (value: string | number) => {
+    onSelect(value);
+    setIsDropdownOpen(false);
+  };
+
+  const openDropdown = () => {
+    selectButtonRef.current?.measure((_fx, _fy, _w, _h, px, py) => {
+      setDropdownPosition({
+        x: px,
+        y: py + _h,
+        width: _w,
+        height: _h,
+      });
+      setIsDropdownOpen(true);
+    });
+  };
 
   return (
-    <View style={style.selectParent}>
-      <Modal
-        onRequestClose={() => setIsModalVisible(false)}
-        transparent
-        visible={isModalVisible}
+    <View className={cn("flex flex-col gap-1.5")}>
+      {label && (
+        <Text className={cn("text-base text-primary", labelClasses)}>
+          {label}
+        </Text>
+      )}
+      <TouchableOpacity
+        ref={selectButtonRef}
+        className={cn(
+          selectClasses,
+          "border border-input py-2.5 px-4 rounded-lg bg-white dark:bg-black"
+        )}
+        onPress={openDropdown}
       >
-        <Pressable
-          onPress={() => setIsModalVisible(false)}
-          style={style.modalParent}
-        >
-          <FlatList
-            data={getFinalOptions()}
-            keyExtractor={(item) => item}
-            renderItem={({ item }) => {
-              const isCloseOption = item === closeButtonSign;
-              function pressableProperties() {
-                return {
-                  onPress: () =>
-                    isCloseOption
-                      ? handleOptionPress(null)
-                      : handleOptionPress(item),
-                  style: isCloseOption
-                    ? style.closeOption
-                    : style.defaultOption,
-                };
-              }
+        <Text className="text-primary">
+          {selectedValue
+            ? new_options.find((option) => option.value === selectedValue)
+                ?.label
+            : placeholder}
+        </Text>
+      </TouchableOpacity>
 
-              function textProperties() {
-                return {
-                  style: isCloseOption ? style.closeText : style.defaultText,
-                };
-              }
-              return (
-                <Pressable {...pressableProperties()}>
-                  <Text {...textProperties()}>{item}</Text>
-                </Pressable>
-              );
-            }}
-            style={style.modalParentProper}
-          />
-        </Pressable>
-      </Modal>
-      <Pressable
-        onPress={() => setIsModalVisible(true)}
-        style={commonStyles.inheritParent}
-      >
-        <ThemedText style={style.optionText}>
-          {selectedOption === null ? "select" : selectedOption}
-        </ThemedText>
-      </Pressable>
+      {/* Dropdown modal */}
+      {isDropdownOpen && dropdownPosition && (
+        <Modal visible={isDropdownOpen} transparent animationType="none">
+          <TouchableOpacity
+            style={{ flex: 1 }}
+            onPress={() => setIsDropdownOpen(false)}
+          >
+            <View
+              style={{
+                top: dropdownPosition.y,
+                left: dropdownPosition.x,
+                width: dropdownPosition.width,
+                shadowOpacity: 0.2,
+                shadowOffset: { width: 0, height: 2 },
+                shadowRadius: 8,
+                elevation: 5,
+              }}
+              className="absolute bg-white shadow-sm dark:bg-black p-2 rounded-md shadow-black dark:shadow-white"
+            >
+              <FlatList
+                data={new_options}
+                keyExtractor={(item) => item.value.toString()}
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    onPress={() => handleSelect(item.value)}
+                    className="p-2 border-b border-input"
+                  >
+                    <Text className="text-primary">{item.label}</Text>
+                  </TouchableOpacity>
+                )}
+              />
+            </View>
+          </TouchableOpacity>
+        </Modal>
+      )}
     </View>
   );
 };
-
-const commonStyles = StyleSheet.create({
-  inheritParent: {
-    height: "100%",
-    width: "100%",
-  },
-});
-const style = StyleSheet.create({
-  closeOption: {
-    backgroundColor: "red",
-  },
-  closeText: {
-    color: "white",
-    textAlign: "center",
-    textTransform: "capitalize",
-  },
-  defaultOption: {
-    backgroundColor: "white",
-  },
-  defaultText: {
-    color: "black",
-    textTransform: "capitalize",
-  },
-  modalParent: {
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    height: "100%",
-    width: "100%",
-  },
-  modalParentProper: {
-    backgroundColor: "white",
-    left: "50%",
-    position: "absolute",
-    top: "50%",
-    transform: "translate(-50%, -50%)",
-    width: 120,
-  },
-  optionText: {
-    ...commonStyles.inheritParent,
-    textAlign: "center",
-    textTransform: "capitalize",
-  },
-  selectParent: {
-    alignItems: "center",
-    borderColor: "white",
-    borderRadius: 4,
-    borderWidth: 2,
-    padding: 4,
-    width: 120,
-  },
-});
-
-export default Select;
